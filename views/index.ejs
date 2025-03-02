@@ -1,0 +1,132 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Hide message after 1.5 sec and refresh the page
+        setTimeout(() => {
+            const msg = document.getElementById("order-message");
+            if (msg) {
+                msg.style.display = "none";
+                window.location.href = "/"; // Refresh to update coffee list
+            }
+        }, 1500);
+    </script>
+</head>
+<body>
+    <h1>Welcome to Our Coffee Shop ☕</h1>
+
+    <% if (message) { %>
+        <p id="order-message" class="success-message"><%= message %></p>
+    <% } %>
+    
+    
+    <h2>Currently Available Coffees</h2>
+    <ul>
+        <% coffees.forEach(coffee => { %>
+            <li>
+                <strong><%= coffee.name %></strong> - $<%= coffee.price %>
+                <form action="/order" method="POST">
+                    <input type="hidden" name="coffee_id" value="<%= coffee.coffee_id %>">
+                    <input type="number" name="quantity" min="1" required>
+                    <button type="submit">Order</button>
+                </form>
+            </li>
+        <% }) %>
+    </ul> -->
+    <!-- <h2>Available Coffees</h2>
+    <ul>
+        <% coffees.forEach(coffee => { %>
+            <li>
+                <form action="/order" method="POST">
+                    <input type="hidden" name="coffee_name" value="<%= coffee.name %>">
+                    <button type="submit">Order <%= coffee.name %></button>
+                </form>
+            </li>
+        <% }); %>
+    </ul>
+</body>
+</html>  -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .coffee-list {
+            list-style: none;
+            padding: 0;
+        }
+        .coffee-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .order-form {
+            margin-top: 20px;
+        }
+        .message {
+            color: green;
+            font-weight: bold;
+            display: none;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        function showMessage(message) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.innerText = message;
+            msgDiv.style.display = 'block';
+            setTimeout(() => { msgDiv.style.display = 'none'; }, 1500);
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Coffee Shop</h1>
+        
+        <div id="message" class="message"></div>
+        
+        <h2>Available Coffees</h2>
+        <% if (typeof errorMessage !== "undefined" && errorMessage) { %>
+            <div class="error-message"><%= errorMessage %></div>
+        <% } %>
+        
+        <ul class="coffee-list">
+            <% coffees.forEach(coffee => { %>
+                <li class="coffee-item">
+                    <span><%= coffee.name %> - $<%= coffee.price %></span>
+                    <form action="/order" method="POST" class="order-form">
+                        <input type="hidden" name="coffee_id" value="<%= coffee.coffee_id %>">
+                        <input type="number" name="quantity" min="1" placeholder="Quantity" required>
+                        <button type="submit">Order</button>
+                    </form>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+</body>
+</html>

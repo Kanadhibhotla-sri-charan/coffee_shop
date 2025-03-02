@@ -1,0 +1,39 @@
+/* public/css/style.css */
+body {
+    font-family: "Poppins", sans-serif;
+    background-color: #f3e5d8; /* Light beige background */
+    margin: 0;
+    padding: 0;
+}
+
+/* Centered container with soft coffee color */
+.container {
+    width: 80%;
+    max-width: 800px;
+    margin: 40px auto;
+    background: #fffaf3; /* Off-white with a warm feel */
+    padding: 25px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+/* Header styling */
+h1 {
+    text-align: center;
+    color: #6f4e37; /* Coffee brown */
+    font-size: 28px;
+}
+
+h2 {
+    text-align: left;
+    color: black;
+}
+
+.success-message {
+    color: green;
+    font-weight: bold;
+    padding: 10px;
+    border: 2px solid green;
+    background-color: #eaffea;
+    text-align: center;
+}
