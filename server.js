@@ -1,138 +1,140 @@
-const express = require("express");
-const { Pool } = require("pg");
-const bodyParser = require("body-parser");
+const { Pool } = require('pg');
+const pgp = require('pg-promise')();
+const path = require('path');
+const express = require('express');
+const session = require('express-session');
 
 const app = express();
 const port = 3000;
 
-// PostgreSQL Connection
-const pool = new Pool({
-    user: "postgres",
-    host: "localhost",
-    database: "coffee_inventory",
-    password: "Sripost@123",
+app.use(session({
+    secret: 'your_secret_key',
+    resave: false,
+    saveUninitialized: true
+}));
+
+// Database connection setup
+const db = pgp({
+    host: 'localhost',
     port: 5432,
+    database: 'coffee_inventory', // Change this to your actual database name
+    user: 'postgres',  // Your PostgreSQL username
+    password: 'Sripost@123'  // Your PostgreSQL password
 });
 
-// Middleware
-app.use(express.static("public")); // Serves static files (CSS, images, etc.)
-app.use(bodyParser.urlencoded({ extended: true })); // Parse form data
-app.set("view engine", "ejs"); // Set EJS as the template engine
+app.use(express.urlencoded({ extended: true })); // To parse form data
+app.use(express.static(path.join(__dirname, 'public'))); // Serving static files
 
-// ------------------ ROUTES ------------------ //
+// Set view engine to EJS
+app.set('view engine', 'ejs');
 
-// Home Route - Displays available coffees for customers
+// ✅ Route: Homepage (Fetch available coffees)
 app.get("/", async (req, res) => {
     try {
-        // Fetch only available coffees
-        const result = await pool.query("SELECT name FROM coffee WHERE quantity > 0");
-        res.render("index", { coffees: result.rows, message: null }); // Ensure message is always defined
-    } catch (err) {
-        console.error("Error fetching coffee data:", err);
-        res.status(500).send("An error occurred.");
+        const coffees = await db.any("SELECT * FROM coffee WHERE quantity > 0");
+
+        // Retrieve messages from session
+        const successMessage = req.session.successMessage || null;
+        const errorMessage = req.session.errorMessage || null;
+
+        console.log("✅ Messages Retrieved:", { successMessage, errorMessage });
+
+        // Clear messages after displaying
+        req.session.successMessage = null;
+        req.session.errorMessage = null;
+
+        res.render("index", { coffees, successMessage, errorMessage });
+    } catch (error) {
+        console.error("Error fetching coffees:", error);
+        res.render("index", { coffees: [], successMessage: null, errorMessage: "Error fetching coffee data." });
     }
 });
 
 
 
-// Order Route - Handles customer orders
-app.post('/order', (req, res) => {  
-    const { coffee_name, quantity } = req.body;
-
-    // Convert quantity to an integer
-    const orderQuantity = parseInt(quantity, 10);
-    if (isNaN(orderQuantity) || orderQuantity <= 0) {
-        return res.redirect('/?error=Invalid+order+quantity');
-    }
-
-    // Fetch coffee details
-    db.oneOrNone('SELECT * FROM coffee WHERE name = $1', [coffee_name])
-        .then(coffee => {
-            if (!coffee) {
-                return res.redirect('/?error=Coffee+not+found');
-            }
-
-            // Check if requested quantity is available
-            if (orderQuantity > coffee.quantity) {
-                return res.redirect(`/?error=Sorry!+Only+${coffee.quantity}+${encodeURIComponent(coffee.name)}+available`);
-            }
-
-            // Update quantity in the database
-            const newQuantity = coffee.quantity - orderQuantity;
-            if (newQuantity > 0) {
-                return db.none('UPDATE coffee SET quantity = $1 WHERE coffee_id = $2', [newQuantity, coffee.coffee_id]);
-            } else {
-                return db.none('DELETE FROM coffee WHERE coffee_id = $1', [coffee.coffee_id]);
-            }
-        })
-        .then(() => {
-            res.redirect(`/?message=Your+order+for+${orderQuantity}+${encodeURIComponent(coffee_name)}+was+successfully+placed`);
-        })
-        .catch(error => {
-            console.error('Error placing order:', error);
-            res.redirect('/?error=An+unexpected+error+occurred');
-        });
-});
-
-
-
-
-
-// Admin Route - Displays coffee inventory management panel
-app.get("/admin", async (req, res) => {
+// ✅ Route: Admin Panel
+app.get('/admin', async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM coffee ORDER BY name ASC");
-        res.render("admin", { coffees: result.rows });
-    } catch (err) {
-        console.error("Error fetching coffee data:", err);
-        res.status(500).send("Server error");
+        const coffees = await db.any("SELECT * FROM coffee WHERE quantity > 0");
+        res.render('admin', { coffees, message: null, errorMessage: null });
+    } catch (error) {
+        console.error("Error fetching admin data:", error);
+        res.status(500).send("Internal server error");
     }
 });
 
-// Add New Coffee Route
+// ✅ Add Coffee
 app.post("/admin/add", async (req, res) => {
     const { name, price, quantity } = req.body;
 
+    if (!name || !price || !quantity) {
+        return res.redirect("/admin?errorMessage=All fields are required.");
+    }
+
     try {
-        await pool.query("INSERT INTO coffee (name, price, quantity) VALUES ($1, $2, $3)", [name, price, quantity]);
-        res.redirect("/admin");
-    } catch (err) {
-        console.error("Error adding coffee:", err);
-        res.status(500).send("Server error");
+        await db.none("INSERT INTO coffee (name, price, quantity) VALUES ($1, $2, $3)", [name, price, quantity]);
+
+        res.redirect("/admin?successMessage=Coffee added successfully!");
+    } catch (error) {
+        console.error("Error adding coffee:", error);
+        res.redirect("/admin?errorMessage=Failed to add coffee.");
     }
 });
 
-// Update Coffee Quantity Route
+// ✅ Update Coffee Quantity
 app.post('/admin/update', async (req, res) => {
-    const { coffee_id, quantity, action } = req.body;
-    const qtyChange = parseInt(quantity);
+    const { coffee_id, action } = req.body;
 
     try {
-        if (action === 'add') {
-            await pool.query(
-                `UPDATE coffee SET quantity = quantity + $1 WHERE coffee_id = $2`,
-                [qtyChange, coffee_id]
-            );
-        } else if (action === 'remove') {
-            await pool.query(
-                `UPDATE coffee SET quantity = GREATEST(quantity - $1, 0) WHERE coffee_id = $2`,
-                [qtyChange, coffee_id]
-            );
-
-            // Remove coffee if quantity reaches 0
-            await pool.query(`DELETE FROM coffee WHERE quantity = 0`);
+        if (action === 'increase') {
+            await db.none('UPDATE coffee SET quantity = quantity + 1 WHERE coffee_id = $1', [coffee_id]);
+        } else if (action === 'decrease') {
+            await db.none('UPDATE coffee SET quantity = quantity - 1 WHERE coffee_id = $1 AND quantity > 0', [coffee_id]);
         }
-
-        res.redirect('/admin');
+        res.redirect('/admin'); // Refresh the admin panel
     } catch (err) {
         console.error('Error updating coffee quantity:', err);
-        res.status(500).send('Error updating coffee quantity.');
+        res.status(500).send('Internal Server Error');
     }
 });
 
+// ✅ Order Coffee
+app.post('/order', async (req, res) => {
+    try {
+        const { coffee_id, quantity } = req.body;
 
+        if (!coffee_id || !quantity || quantity <= 0) {
+            req.session.errorMessage = "Invalid order request.";
+            return res.redirect('/');
+        }
 
-// Start Server
+        const coffee = await db.oneOrNone("SELECT * FROM coffee WHERE coffee_id = $1", [coffee_id]);
+
+        if (!coffee) {
+            req.session.errorMessage = "Coffee not found.";
+            return res.redirect('/');
+        }
+
+        if (coffee.quantity < quantity) {
+            req.session.errorMessage = "Not enough stock available.";
+            return res.redirect('/');
+        }
+
+        // Update quantity
+        await db.none("UPDATE coffee SET quantity = quantity - $1 WHERE coffee_id = $2", [quantity, coffee_id]);
+
+        // ✅ Debugging: Check if success message is being set
+        req.session.successMessage = "Order placed successfully!";
+        console.log("✅ Success Message Set:", req.session.successMessage);
+
+        return res.redirect('/');
+    } catch (error) {
+        console.error("Error placing order:", error);
+        res.status(500).send("Internal server error");
+    }
+});
+
+// ✅ Start Server
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}`);
 });

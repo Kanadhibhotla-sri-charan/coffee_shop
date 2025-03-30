@@ -1,39 +1,65 @@
-/* public/css/style.css */
 body {
-    font-family: "Poppins", sans-serif;
-    background-color: #f3e5d8; /* Light beige background */
-    margin: 0;
-    padding: 0;
-}
-
-/* Centered container with soft coffee color */
-.container {
-    width: 80%;
-    max-width: 800px;
-    margin: 40px auto;
-    background: #fffaf3; /* Off-white with a warm feel */
-    padding: 25px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
-
-/* Header styling */
-h1 {
+    font-family: Arial, sans-serif;
     text-align: center;
-    color: #6f4e37; /* Coffee brown */
-    font-size: 28px;
+    background-color: #f8f8f8;
+    padding: 20px;
+}
+
+h1 {
+    color: #6b3e26;
 }
 
 h2 {
-    text-align: left;
-    color: black;
+    color: #5a2d15;
+    margin-top: 20px;
 }
 
 .success-message {
     color: green;
     font-weight: bold;
+    margin: 10px 0;
+}
+
+.error-message {
+    color: red;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.coffee-list {
+    list-style: none;
+    padding: 0;
+}
+
+.coffee-list li {
+    background: white;
     padding: 10px;
-    border: 2px solid green;
-    background-color: #eaffea;
-    text-align: center;
+    margin: 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+form {
+    display: flex;
+    align-items: center;
+}
+
+input {
+    width: 50px;
+    margin: 0 10px;
+}
+
+button {
+    background: #5a2d15;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #6b3e26;
 }

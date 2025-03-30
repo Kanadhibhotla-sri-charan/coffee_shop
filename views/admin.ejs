@@ -3,56 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Coffee Inventory</title>
+    <title>Admin Panel - Coffee Shop</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Currently Available Coffees</h1>
+    <header>
+        <h1>Admin Panel - Coffee Shop</h1>
+        <nav>
+            <a href="/">Home</a>
+        </nav>
+    </header>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Quantity Available</th>
-                    <th>Price ($)</th>
-                    <th>Quantity to Add/Remove</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% coffees.forEach(coffee => { %>
-                    <tr>
-                        <td><%= coffee.name %></td>
-                        <td><%= coffee.quantity %></td>
-                        <td><%= coffee.price %></td>
-                        <td>
-                            <form action="/admin/update" method="POST" class="update-form">
-                                <input type="hidden" name="coffee_id" value="<%= coffee.coffee_id %>">
-                                <input type="number" name="quantity" min="1" placeholder="Enter amount" required>
-                                <button type="submit" name="action" value="add" class="add-btn">Add</button>
-                                <button type="submit" name="action" value="remove" class="remove-btn">Remove</button>
-                            </form>
-                        </td>
-                        
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
+    
 
-        <h2>Add New Coffee</h2>
-        <form action="/admin/add" method="POST" class="add-form">
-            <label for="name">Name:</label>
-            <input type="text" name="name" required>
-
-            <label for="price">Price ($):</label>
-            <input type="number" name="price" step="0.01" required>
-
-            <label for="quantity">Initial Quantity:</label>
-            <input type="number" name="quantity" required>
-
-            <button type="submit">Add Coffee</button>
-        </form>
+<!-- Display error messages -->
+<% if (message) { %>
+    <div class="success-message" style="color: green; font-weight: bold;">
+        <%= message %>
     </div>
-</body>
-</html>
+<% } %>
+
+<% if (errorMessage) { %>
+    <div class="error-message" style="color: red; font-weight: bold;">
+        <%= errorMessage %>
+    </div>
+<% } %>
+
+
+<!-- Add Coffee Form -->
+<form action="/admin/add" method="POST">
+    <label for="name">Coffee Name:</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="price">Price (₹):</label>
+    <input type="number" id="price" name="price" step="0.01" required>
+
+    <label for="quantity">Quantity:</label>
+    <input type="number" id="quantity" name="quantity" required>
+
+    <button type="submit">Add Coffee</button>
+</form>
+
+
+<!-- Display Existing Coffees -->
+<h2>Existing Coffees</h2>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Actions</th>
+    </tr>
+    <% coffees.forEach(coffee => { %>
+        <tr>
+            <td><%= coffee.name %></td>
+            <td>₹<%= coffee.price %></td>
+            <td><%= coffee.quantity %></td>
+            <td>
+                <form action="/admin/update" method="POST" style="display:inline;">
+                    <input type="hidden" name="coffee_id" value="<%= coffee.coffee_id %>">
+                    <input type="hidden" name="action" value="increase">
+                    <button type="submit">+</button>
+                </form>
+                <form action="/admin/update" method="POST" style="display:inline;">
+                    <input type="hidden" name="coffee_id" value="<%= coffee.coffee_id %>">
+                    <input type="hidden" name="action" value="decrease">
+                    <button type="submit" <% if (coffee.quantity <= 0) { %> disabled <% } %>>-</button>
+                </form>
+            </td>
+        </tr>
+    <% }) %>
+</table>
+
+
+
+    <% if (message) { %>
+        <div class="success-message"><%= message %></div>
+        <script>
+            setTimeout(() => {
+                document.querySelector(".success-message").style.display = "none";
+            }, 3000);
+        </script>
+    <% } %>
+
+    <% if (errorMessage) { %>
+        <div class="error-message"><%= errorMessage %></div>
+        <script>
+            setTimeout(() => {
+                document.querySelector(".error-message").style.display = "none";
+            }, 3000);
+        </script>
+    <% } %>
